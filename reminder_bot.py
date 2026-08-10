@@ -2,8 +2,9 @@
 this bot in telegram with id @Reminder_amir_bot .
 This bot is designed to send daily reminders.
 """
+
 # Using the Telegram Bot Library
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update,ReplyKeyboardMarkup
 from telegram.ext import (
     Application,
     MessageHandler,
@@ -14,11 +15,16 @@ from telegram.ext import (
 )
 from datetime import time   # To send an automated reminder at a specific time
 from zoneinfo import ZoneInfo   # To determine the location for the clock
+from dotenv import load_dotenv  # for hidden token
+import os
+from database import Database #To connect to the database
 
 
+load_dotenv()
+db = Database()
 
 # Obtaining a token from BotFather
-TOKEN = "8736640642:AAGe7DtH6wJGOWz3LhlixJzJ5R_o0tTurZ0"
+TOKEN = os.getenv("TOKEN")
 
 TEXT, TIME = range(2)
 
@@ -29,9 +35,49 @@ async def reminder (context : ContextTypes.DEFAULT_TYPE):
         chat_id = chat_id ,
         text = "وقتش رسید"
     )
+
 # Start function for /start in bot
+
+async def post_init (application):
+    users = db.get_users()
+
+    for user in users:
+        chat_id = user[0]
+
+        name = f"reminder_{chat_id}"
+
+        application.job_queue.run_daily(
+            reminder,
+            time=time(
+                hour=13,
+                minute=23,
+                tzinfo=ZoneInfo("Asia/Tehran")
+            ),
+            chat_id=chat_id,
+            name=name
+        )
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # async 
+
+    chat_id = update.effective_chat.id
+    db.add(chat_id)
+    print("job created", chat_id)
+
+    name = f"reminder_{chat_id}"
+    old_jobs = context.job_queue.get_jobs_by_name(name)
+    for job in old_jobs:
+        job.schedule_removal()
+
+
+    job = context.job_queue.run_daily(
+        reminder,
+    
+    time=time(hour=13, minute=23 , tzinfo=ZoneInfo("Asia/Tehran")),
+    chat_id=chat_id,
+    name=name
+        )
+    print("JOB:", job)
+    
     keyboard = [
         ["ثبت یادآوری","لیست یادآوری ها"],
         ["تنظیمات"],["/start"]
@@ -44,17 +90,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     
-    chat_id = update.effective_chat.id
-    print("job created", chat_id)
-    context.job_queue.run_daily(
-        reminder,
-        time=time(hour=11, minute=47 , tzinfo=ZoneInfo("Asia/Tehran")),
-        chat_id=chat_id
-    )
+    
     user = update.effective_user   # To display the username
     await update.message.reply_text(f"سلام {user.first_name}",reply_markup=reply_keyboard)
 
-app = Application.builder().token(TOKEN).build()
+app = Application.builder().token(TOKEN).post_init(post_init).build()
 app.add_handler(CommandHandler("start",start))
 
 app.run_polling()
