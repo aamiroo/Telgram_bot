@@ -49,8 +49,8 @@ async def post_init (application):
         application.job_queue.run_daily(
             reminder,
             time=time(
-                hour=13,
-                minute=23,
+                hour=10,
+                minute=35,
                 tzinfo=ZoneInfo("Asia/Tehran")
             ),
             chat_id=chat_id,
@@ -72,7 +72,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     job = context.job_queue.run_daily(
         reminder,
     
-    time=time(hour=13, minute=23 , tzinfo=ZoneInfo("Asia/Tehran")),
+    time=time(hour=10, minute=35 , tzinfo=ZoneInfo("Asia/Tehran")),
     chat_id=chat_id,
     name=name
         )
