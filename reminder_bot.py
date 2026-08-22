@@ -4,21 +4,19 @@ This bot is designed to send daily reminders.
 """
 
 # Using the Telegram Bot Library
-from telegram import Update,ReplyKeyboardMarkup
+import os
+from datetime import time  # To send an automated reminder at a specific time
+from zoneinfo import ZoneInfo  # To determine the location for the clock
+
+from dotenv import load_dotenv  # for hidden token
+from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
     Application,
-    MessageHandler,
     CommandHandler,
     ContextTypes,
-    filters,
-    ConversationHandler,
 )
-from datetime import time   # To send an automated reminder at a specific time
-from zoneinfo import ZoneInfo   # To determine the location for the clock
-from dotenv import load_dotenv  # for hidden token
-import os
-from database import Database #To connect to the database
 
+from database import Database  #To connect to the database
 
 load_dotenv()
 db = Database()
@@ -49,8 +47,8 @@ async def post_init (application):
         application.job_queue.run_daily(
             reminder,
             time=time(
-                hour=10,
-                minute=35,
+                hour=14,
+                minute=10,
                 tzinfo=ZoneInfo("Asia/Tehran")
             ),
             chat_id=chat_id,
@@ -72,7 +70,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     job = context.job_queue.run_daily(
         reminder,
     
-    time=time(hour=10, minute=35 , tzinfo=ZoneInfo("Asia/Tehran")),
+    time=time(hour=14, minute=10 , tzinfo=ZoneInfo("Asia/Tehran")),
     chat_id=chat_id,
     name=name
         )
